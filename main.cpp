@@ -160,12 +160,7 @@ void saveToFile (Cinema* session, int count)
 
     for (int i = 0; i < count; i++)
     {
-        fileOut << session[i].getName() << ';'
-                << session[i].getNumberRoom() << ';'
-                << session[i].getTimeStart() << ';'
-                << session[i].getCountPlace() << ';'
-                << session[i].getCountBuyTickets() << ';'
-                << session[i].getCostTickets() << std::endl;
+        fileOut << session[i].getName() << ';' << session[i].getNumberRoom() << ';' << session[i].getTimeStart() << ';' << session[i].getCountPlace() << ';' << session[i].getCountBuyTickets() << ';' << session[i].getCostTickets() << std::endl;
     }
 
     fileOut.close();
@@ -323,8 +318,7 @@ int main ()
                 {
                     if (session[i].getFreePlace() > 0)
                     {
-                        std::cout << "\nФильм: " << session[i].getName()<< " | Зал: " << session[i].getNumberRoom()<< " | Время: " << session[i].getTimeStart()<< " | Свободно: " << session[i].getFreePlace()
-                                  << std::endl;
+                        std::cout << "\nФильм: " << session[i].getName()<< " | Зал: " << session[i].getNumberRoom()<< " | Время: " << session[i].getTimeStart()<< " | Свободно: " << session[i].getFreePlace()<< std::endl;
                     }
                 }
             }
@@ -361,8 +355,7 @@ int main ()
                     std::cout << "Сеанс не найден" << std::endl;
                 } else
                 {
-                    std::cout << "Выручка сеанса: "
-                              << session[number].getRevenue() << std::endl;
+                    std::cout << "Выручка сеанса: " << session[number].getRevenue() << std::endl;
                 }
             }
             else if (choice == 5)
