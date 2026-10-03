@@ -323,10 +323,7 @@ int main ()
                 {
                     if (session[i].getFreePlace() > 0)
                     {
-                        std::cout << "\nФильм: " << session[i].getName()
-                                  << " | Зал: " << session[i].getNumberRoom()
-                                  << " | Время: " << session[i].getTimeStart()
-                                  << " | Свободно: " << session[i].getFreePlace()
+                        std::cout << "\nФильм: " << session[i].getName()<< " | Зал: " << session[i].getNumberRoom()<< " | Время: " << session[i].getTimeStart()<< " | Свободно: " << session[i].getFreePlace()
                                   << std::endl;
                     }
                 }
