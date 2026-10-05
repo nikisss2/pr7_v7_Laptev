@@ -134,8 +134,8 @@ class Cinema {
         }
 };
 
-//поиск сеанса по названию
-int findSession (Cinema* session, int count, std::string nameFilm)
+//поиск сеанса
+int findSession (Cinema session[], int count, std::string nameFilm)
 {
     for (int i = 0; i < count; i++)
     {
@@ -147,7 +147,100 @@ int findSession (Cinema* session, int count, std::string nameFilm)
     return -1;
 }
 
-void saveToFile (Cinema* session, int count)
+int loadFromFile (Cinema session[])
+{
+    std::ifstream fileIn ("data.txt");
+
+    if (!fileIn.is_open())
+    {
+        throw std::runtime_error (
+            "Не удалось открыть файл"
+        );
+    }
+
+    int count = 0;
+    std::string tempStr;
+
+    while (std::getline(fileIn, tempStr))
+    {
+        if (tempStr.empty())
+        {
+            continue;
+        }
+
+        std::size_t pos = 0;
+
+        pos = tempStr.find(';');
+        if (pos == std::string::npos)
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setName(tempStr.substr(0, pos));
+        tempStr.erase(0, pos + 1);
+
+        pos = tempStr.find(';');
+        if (pos == std::string::npos)
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setNumberRoom(std::stoi(tempStr.substr(0, pos)));
+        tempStr.erase(0, pos + 1);
+
+        pos = tempStr.find(';');
+        if (pos == std::string::npos)
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setTimeStart(tempStr.substr(0, pos));
+        tempStr.erase(0, pos + 1);
+
+        pos = tempStr.find(';');
+        if (pos == std::string::npos)
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setCountPlace(std::stoi(tempStr.substr(0, pos)));
+        tempStr.erase(0, pos + 1);
+
+        pos = tempStr.find(';');
+        if (pos == std::string::npos)
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setCountBuyTickets(std::stoi(tempStr.substr(0, pos)));
+        tempStr.erase(0, pos + 1);
+
+        if (tempStr.empty())
+        {
+            throw std::invalid_argument (
+                "Недостаточно данных в строке"
+            );
+        }
+        session[count].setCostTickets(std::stoi(tempStr));
+
+        count++;
+    }
+
+    fileIn.close();
+
+#ifdef DEBUG_MODE
+    std::cout << "Загружено записей: " << count << std::endl;
+#endif
+
+    return count;
+}
+
+void saveToFile (Cinema session[], int count)
 {
     std::ofstream fileOut ("data.txt");
 
@@ -170,114 +263,113 @@ void saveToFile (Cinema* session, int count)
 #endif
 }
 
+int addSession (Cinema session[], int count, int maxCount)
+{
+    if (count >= maxCount)
+    {
+        throw std::out_of_range (
+            "Достигнут максимум сеансов"
+        );
+    }
+
+    std::string tempStr;
+    int tempInt = 0;
+
+    std::cout << "Введите название фильма: ";
+    std::getline(std::cin, tempStr);
+    session[count].setName(tempStr);
+
+    std::cout << "Введите номер зала: ";
+    std::cin >> tempInt;
+    session[count].setNumberRoom(tempInt);
+    std::cin.ignore();
+
+    std::cout << "Введите время начала: ";
+    std::getline(std::cin, tempStr);
+    session[count].setTimeStart(tempStr);
+
+    std::cout << "Введите количество мест: ";
+    std::cin >> tempInt;
+    session[count].setCountPlace(tempInt);
+
+    std::cout << "Введите количество проданных билетов: ";
+    std::cin >> tempInt;
+    session[count].setCountBuyTickets(tempInt);
+
+    std::cout << "Введите стоимость билета: ";
+    std::cin >> tempInt;
+    session[count].setCostTickets(tempInt);
+    std::cin.ignore();
+
+    count++;
+
+    std::cout << "Сеанс добавлен" << std::endl;
+
+    return count;
+}
+
+int deleteSession (Cinema session[], int count)
+{
+    if (count == 0)
+    {
+        throw std::out_of_range (
+            "Список сеансов пуст"
+        );
+    }
+
+    std::string nameFilm;
+    std::cout << "Введите название фильма для удаления: ";
+    std::getline(std::cin, nameFilm);
+
+    int number = findSession(session, count, nameFilm);
+
+    if (number == -1)
+    {
+        std::cout << "Сеанс не найден" << std::endl;
+        return count;
+    }
+
+    session[number].printInfo();
+    std::cout << "Удалить этот сеанс? (1 - да, 0 - нет): ";
+
+    int confirm = 0;
+    std::cin >> confirm;
+    std::cin.ignore();
+
+    if (confirm != 1)
+    {
+        std::cout << "Удаление отменено" << std::endl;
+        return count;
+    }
+
+    for (int i = number; i < count - 1; i++)
+    {
+        session[i] = session[i + 1];
+    }
+
+    count--;
+
+    session[count].setName("удалено");
+    session[count].setNumberRoom(1);
+    session[count].setTimeStart("00:00");
+    session[count].setCountPlace(1);
+    session[count].setCountBuyTickets(0);
+    session[count].setCostTickets(1);
+
+    std::cout << "Сеанс удалён" << std::endl;
+
+    return count;
+}
+
 int main ()
 {
-    Cinema* session = 0;
+    const int MAX_COUNT = 100;
+    Cinema session[MAX_COUNT];
     int count = 0;
-    int index = 0;
 
     try
     {
-        std::fstream file ("data.txt", std::ios::in);
-
-        if (!file.is_open())
-        {
-            throw std::runtime_error (
-                "Не удалось открыть файл"
-            );
-        }
-
-        std::string line;
-
-        while (std::getline(file, line))
-        {
-            if (!line.empty())
-            {
-                count++;
-            }
-        }
-
-        file.clear();
-        file.seekg(0);
-
-        session = new Cinema[count];
-        std::string tempStr;
-
-        while (std::getline(file, tempStr))
-        {
-            if (tempStr.empty())
-            {
-                continue;
-            }
-
-            std::size_t pos = 0;
-
-            pos = tempStr.find(';');
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setName(tempStr.substr(0, pos));
-            tempStr.erase(0, pos + 1);
-
-            pos = tempStr.find(';');
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setNumberRoom(std::stoi(tempStr.substr(0, pos)));
-            tempStr.erase(0, pos + 1);
-
-            pos = tempStr.find(';');
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setTimeStart(tempStr.substr(0, pos));
-            tempStr.erase(0, pos + 1);
-
-            pos = tempStr.find(';');
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setCountPlace(std::stoi(tempStr.substr(0, pos)));
-            tempStr.erase(0, pos + 1);
-
-            pos = tempStr.find(';');
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setCountBuyTickets(std::stoi(tempStr.substr(0, pos)));
-            tempStr.erase(0, pos + 1);
-
-            if (tempStr.empty())
-            {
-                throw std::invalid_argument (
-                    "Недостаточно данных в строке"
-                );
-            }
-            session[index].setCostTickets(std::stoi(tempStr));
-
-            index++;
-        }
-
-        file.close();
-
-#ifdef DEBUG_MODE
-        std::cout << "Загружено записей: " << index << std::endl;
-#endif
+        count = loadFromFile(session);
 
         int choice = -1;
 
@@ -287,7 +379,9 @@ int main ()
             std::cout << "2 - сеансы со свободными местами" << std::endl;
             std::cout << "3 - продажа билетов" << std::endl;
             std::cout << "4 - выручка сеанса" << std::endl;
-            std::cout << "5 - сохранить в файл" << std::endl;
+            std::cout << "5 - добавить сеанс" << std::endl;
+            std::cout << "6 - удалить сеанс" << std::endl;
+            std::cout << "7 - сохранить в файл" << std::endl;
             std::cout << "0 - выход" << std::endl;
             std::cout << "Выбор: ";
 
@@ -295,14 +389,14 @@ int main ()
             std::cin.ignore();
 
             std::string nameFilm;
-            int number = 0;
+            int number = -1;
 
             if (choice == 1)
             {
                 std::cout << "Введите название фильма: ";
                 std::getline(std::cin, nameFilm);
 
-                number = findSession(session, index, nameFilm);
+                number = findSession(session, count, nameFilm);
 
                 if (number == -1)
                 {
@@ -314,11 +408,11 @@ int main ()
             }
             else if (choice == 2)
             {
-                for (int i = 0; i < index; i++)
+                for (int i = 0; i < count; i++)
                 {
                     if (session[i].getFreePlace() > 0)
                     {
-                        std::cout << "\nФильм: " << session[i].getName()<< " | Зал: " << session[i].getNumberRoom()<< " | Время: " << session[i].getTimeStart()<< " | Свободно: " << session[i].getFreePlace()<< std::endl;
+                        std::cout << "\nФильм: " << session[i].getName() << "\nЗал: " << session[i].getNumberRoom() << "\nВремя: " << session[i].getTimeStart() << "\nСвободно: " << session[i].getFreePlace() << std::endl;
                     }
                 }
             }
@@ -327,7 +421,7 @@ int main ()
                 std::cout << "Введите название фильма: ";
                 std::getline(std::cin, nameFilm);
 
-                number = findSession(session, index, nameFilm);
+                number = findSession(session, count, nameFilm);
 
                 if (number == -1)
                 {
@@ -348,7 +442,7 @@ int main ()
                 std::cout << "Введите название фильма: ";
                 std::getline(std::cin, nameFilm);
 
-                number = findSession(session, index, nameFilm);
+                number = findSession(session, count, nameFilm);
 
                 if (number == -1)
                 {
@@ -360,26 +454,29 @@ int main ()
             }
             else if (choice == 5)
             {
-                saveToFile(session, index);
+                count = addSession(session, count, MAX_COUNT);
+            }
+            else if (choice == 6)
+            {
+                count = deleteSession(session, count);
+            }
+            else if (choice == 7)
+            {
+                saveToFile(session, count);
             }
         }
-
-        delete[] session;
     }
-    catch (const std::invalid_argument& e)
+    catch (const std::invalid_argument e)
     {
         std::cout << "Ошибка: " << e.what() << std::endl;
-        delete[] session;
     }
-    catch (const std::out_of_range& e)
+    catch (const std::out_of_range e)
     {
         std::cout << "Ошибка: " << e.what() << std::endl;
-        delete[] session;
     }
-    catch (const std::exception& e)
+    catch (const std::exception e)
     {
         std::cout << "Ошибка: " << e.what() << std::endl;
-        delete[] session;
     }
 
     return 0;
